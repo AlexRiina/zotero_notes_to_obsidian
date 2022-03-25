@@ -37,18 +37,20 @@ def main():
     config.read_file(args.config)
 
     zot = Zotero(
-        config.get("zotero", "library"),
-        config.get("zotero", "library_type"),
-        config.get("zotero", "api_key"),
+        config["zotero"]["library"],
+        config["zotero"]["library_type"],
+        config["zotero"]["api_key"],
     )
 
-    items = zot.items(q=args.search_string, itemType="journalArticle")
+    items = zot.items(q=args.search_string)
+    items = [item for item in items if item['data']['itemType'] not in {"note", "attachment"}]
+
     if not items:
         raise Exception("no item found")
     elif len(items) > 1:
         for index, item in enumerate(items):
-            print(index, item["data"]["title"])
-        item = items[int(input("What index?"))]
+            print(index, item['data']['itemType'], item["data"]["title"])
+        item = items[int(input("Which is the main item?\n"))]
     else:
         item = items[0]
 
@@ -60,10 +62,11 @@ def main():
     context = item["data"].copy()
     context["annotations"] = markdown
 
-    output = Template(config.get("obsidian", "format")).substitute(context)
+    output = Template(config["obsidian"]["template"]).substitute(context)
+    destination_file = pathlib.Path(config["obsidian"]["vault"]) / filename
 
-    print(f"writing {args.vault / filename}")
-    with open(args.vault / filename, "x") as fp:
+    print("writing", destination_file)
+    with open(destination_file, "x") as fp:
         fp.write(output)
 
 
