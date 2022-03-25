@@ -10,6 +10,9 @@ config.cfg.
 1. copy config.tpl to config.cfg and fill in the required details
 1. run command to generate notes file
 
+### Running
+
 ```bash
-python main.py "Justify Your Alpha" --config config.cfg
+$ python main.py "Justify Your Alpha" --config config.cfg
+writing .../Justify Your Alpha.md
 ```
