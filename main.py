@@ -2,52 +2,16 @@ import argparse
 import configparser
 import pathlib
 import re
-from functools import lru_cache
+from string import Template
 
 import pandoc
 from pyzotero.zotero import Zotero
-
-
-@lru_cache()
-def zotero_items(library, library_type, api_key):
-    zot = Zotero(library, library_type, api_key)
-    items = zot.items()
-    return items
 
 
 def make_filename(title):
     """ convert pubication title to safe filename for obsidian """
     title = title.replace(":", " - ")
     return title + ".md"
-
-
-def write_file(title, contents, file):
-    file.write("---\n")
-    file.write("type:article\n")
-    file.write(f"title:{title}\n")
-    file.write("---\n")
-    file.write("\n")
-    file.write(contents)
-
-
-def find_doi(items, doi):
-    for item in items:
-        try:
-            if item["data"]["DOI"] == doi:
-                return item
-        except KeyError:
-            pass
-    raise ValueError("no matching DOI found")
-
-
-def find_attachment(items, parent_item):
-    for item in items:
-        try:
-            if item["data"]["parentItem"] == parent_item["key"]:
-                return item
-        except KeyError:
-            pass
-    raise ValueError("no matching attachment found")
 
 
 def html_to_markdown(note):
@@ -58,38 +22,49 @@ def html_to_markdown(note):
 
 
 def main():
-    config = configparser.ConfigParser()
-    config.read("config.cfg")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("doi")
+    parser.add_argument("search_string")
     parser.add_argument(
-        "--vault",
-        help="obsidian vault, defaults to config",
-        default=config["obsidian"]["vault"],
-        type=pathlib.Path,
+        "--config",
+        metavar="config.cfg",
+        # default="config.cfg",
+        type=argparse.FileType("r"),
     )
-
     args = parser.parse_args()
 
-    items = zotero_items(
-        config["zotero"]["library"],
-        config["zotero"]["library_type"],
-        config["zotero"]["api_key"],
+    config = configparser.ConfigParser()
+    config.read_file(args.config)
+
+    zot = Zotero(
+        config.get("zotero", "library"),
+        config.get("zotero", "library_type"),
+        config.get("zotero", "api_key"),
     )
-    item = find_doi(items, args.doi)
+
+    items = zot.items(q=args.search_string, itemType="journalArticle")
+    if not items:
+        raise Exception("no item found")
+    elif len(items) > 1:
+        for index, item in enumerate(items):
+            print(index, item["data"]["title"])
+        item = items[int(input("What index?"))]
+    else:
+        item = items[0]
+
     filename = make_filename(item["data"]["title"])
 
-    attachment = find_attachment(items, item)
+    attachment = zot.children(item["key"], itemType="note")[0]
     markdown = html_to_markdown(attachment["data"]["note"])
+
+    context = item["data"].copy()
+    context["annotations"] = markdown
+
+    output = Template(config.get("obsidian", "format")).substitute(context)
 
     print(f"writing {args.vault / filename}")
     with open(args.vault / filename, "x") as fp:
-        write_file(
-            title=item["data"]["title"],
-            contents=markdown,
-            file=fp,
-        )
+        fp.write(output)
 
 
 if __name__ == "__main__":
