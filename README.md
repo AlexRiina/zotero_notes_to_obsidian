@@ -3,6 +3,8 @@ articles, download the related notes, and convert the attachments to a
 markdown file in your obsidian vault, using a custom template defined in
 config.cfg.
 
+Should works with both default zotero 6 format and zotfile exports.
+
 ### Setup
 
 1. download this script
@@ -13,6 +15,6 @@ config.cfg.
 ### Running
 
 ```bash
-$ python main.py "Justify Your Alpha" --config config.cfg
+$ python main.py "Justify Your Alpha" --config config.cfg --dry-run
 writing .../Justify Your Alpha.md
 ```

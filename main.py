@@ -83,7 +83,6 @@ def main():
     parser.add_argument(
         "--config",
         metavar="config.cfg",
-        # default="config.cfg",
         type=argparse.FileType("r"),
     )
     args = parser.parse_args()
