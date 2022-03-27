@@ -9,7 +9,7 @@ Should works with both default zotero 6 format and zotfile exports.
 
 1. download this script
 1. generate a new zotero API key from https://www.zotero.org/settings/keys
-1. copy config.tpl to config.cfg and fill in the required details
+1. copy config.cfg.tpl to config.cfg and fill in the required details
 1. run command to generate notes file
 
 ### Running
