@@ -36,7 +36,10 @@ def native_to_markdown(item_key, note):
 
         # remove curly quotes
         quoted_text = highlight.text[1:-2]
-        annotation_text = citation.find(class_="citation").nextSibling.text
+        if annotation := citation.find(class_="citation").nextSibling:
+            annotation_text = annotation.text
+        else:
+            annotation_text = ""
         annotation_data = json.loads(urllib.parse.unquote(highlight.attrs['data-annotation']))
 
         page = annotation_data['pageLabel']
